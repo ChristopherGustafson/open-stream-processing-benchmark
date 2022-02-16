@@ -1,5 +1,5 @@
 #! /bin/bash
-export TOPIC_NAME=${1:-metrics}
+export TOPIC_NAME=ndwflow
 
 export KAFKA_ADVERTISED_HOST_NAME=$(hostname -I | head -n1 | awk '{print $1;}')
 

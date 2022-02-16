@@ -9,7 +9,7 @@ import scala.util.Try
 
 class GeneralConfig(overrides: Map[String, Any] = Map()) extends Serializable {
   // "aws", "local" or "docker"
-  val deploymentType: String = Try(sys.env("DEPLOYMENT_TYPE")).getOrElse("aws")
+  val deploymentType: String = Try(sys.env("DEPLOYMENT_TYPE")).getOrElse("local")
 
   val configProperties: Config = ConfigFactory.load()
     .withFallback(ConfigFactory.parseMap(overrides.asJava))

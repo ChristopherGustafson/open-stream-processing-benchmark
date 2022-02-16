@@ -25,5 +25,6 @@ The following environment variables should be set:
 
 To run do:
 
+    source ./setEnvVariables.sh
     sbt compile
     sbt run

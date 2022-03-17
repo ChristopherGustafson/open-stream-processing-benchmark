@@ -10,6 +10,7 @@ import com.codahale.metrics.{MetricFilter, MetricRegistry, Slf4jReporter}
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 import play.api.libs.json.Json
+import java.text.{DateFormat, SimpleDateFormat}
 
 import scala.collection.JavaConverters._
 
@@ -62,18 +63,26 @@ object LocalModeWriter {
     val consumer = new KafkaConsumer[String, String](props)
 
     //subscribe to metrics topic
-    consumer.subscribe(java.util.Collections.singletonList("metrics"))
+    consumer.subscribe(java.util.Collections.singletonList("add-confirm"))
 
     while (true) {
       val metrics = consumer.poll(10000)
       for (metric <- metrics.asScala) {
         val kafkaPublishTimestampResult = metric.timestamp()
         val metricValue = Json.parse(metric.value())
-        val publishTimestampInput = (metricValue \ "publishTimestamp").as[Long]
-        val jobProfile = (metricValue \ "jobProfile").as[String]
+        val publishTimestampInput = (metricValue \ "timestamp").as[String].toLong
+        // val jobProfile = (metricValue \ "jobProfile").as[String]
         val durationPublishToPublish = kafkaPublishTimestampResult - publishTimestampInput
-        registry.histogram(jobProfile).update(durationPublishToPublish)
+        println("Got value: " + metricValue)
+        println("Time Duration: " + durationPublishToPublish + "\n")
+        registry.histogram("jobProfile").update(durationPublishToPublish)
       }
     }
+  }
+
+  def getTime(timeString: String): Long = {
+    // Date format of data
+    val dateFormat: DateFormat = new SimpleDateFormat("yyyy-MM-ddHH:mm:ss")
+    dateFormat.parse(timeString).getTime
   }
 }

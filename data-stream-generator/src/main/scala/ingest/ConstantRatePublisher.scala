@@ -34,8 +34,8 @@ class ConstantRatePublisher(sparkSession: SparkSession, kafkaProperties: Propert
       val timestampOfObservation = DataUtils.extractTimestamp(observation)
 
       // make the key only the measurement id and put the lane in the msg body to have same partitioning for input and output
-      val (measurementId, msg) = DataUtils.putLaneNumberInBody(keyLine, observationLine)
-      Observation(timestampOfObservation, measurementId, msg)
+      // val (measurementId, msg) = DataUtils.putLaneNumberInBody(keyLine, observationLine)
+      Observation(timestampOfObservation, keyLine, observationLine)
     }.groupBy(_.timestamp).sortBy(_._1).collect().toList
 
     val producer = new KafkaProducer(kafkaProperties, new StringSerializer, new StringSerializer)
@@ -61,19 +61,34 @@ class ConstantRatePublisher(sparkSession: SparkSession, kafkaProperties: Propert
         smallGroupsList.foreach { smallList => //SUPPOSED TO LAST 5 MS
           smallList.foreach { observation =>
             0.to(Math.round(ConfigUtils.dataVolume.toInt/3.0).toInt).foreach { volumeIteration =>
-              if (observation.message.contains("flow")) {
+              // Request with userId and quantity is a addToCart request
+              if (observation.message.contains("userId") && observation.message.contains("quantity")) {
                 flowStats.mark()
                 val msg = new ProducerRecord[String, String](
-                  ConfigUtils.flowTopic,
+                  ConfigUtils.addTopic,
                   index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                   observation.replaceTimestampWithCurrentTimestamp().message
                 )
                 producer.send(msg)
-              } else {
+              } 
+              // If it has userId but is not an addToCart, it is a checkout request
+              else if (observation.message.contains("userId")) {
                 if(ConfigUtils.lastStage < 100 ) { // if the stage is equal to or larger than 100 then it needs only one input stream
                   speedStats.mark()
                   val msg = new ProducerRecord[String, String](
-                    ConfigUtils.speedTopic,
+                    ConfigUtils.checkoutTopic,
+                    index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
+                    observation.replaceTimestampWithCurrentTimestamp().message
+                  )
+                  producer.send(msg)
+                }
+              } 
+              // Otherwise it is a restock request
+              else {
+                if(ConfigUtils.lastStage < 100 ) { // if the stage is equal to or larger than 100 then it needs only one input stream
+                  speedStats.mark()
+                  val msg = new ProducerRecord[String, String](
+                    ConfigUtils.restockTopic,
                     index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                     observation.replaceTimestampWithCurrentTimestamp().message
                   )
@@ -81,28 +96,29 @@ class ConstantRatePublisher(sparkSession: SparkSession, kafkaProperties: Propert
                 }
               }
             }
+            Thread.sleep(500);
           }
-          val sleepingTimeTillNext5ms = next5MS - System.currentTimeMillis()
-          if (sleepingTimeTillNext5ms > 0) {
-            logger.debug(s"""sleep time $sleepingTimeTillNext5ms ms before next 5  ms $next5MS ; current time: ${System.currentTimeMillis()}""")
-            Thread.sleep(sleepingTimeTillNext5ms)
-          }
-          next5MS = next5MS + 5
+          // val sleepingTimeTillNext5ms = next5MS - System.currentTimeMillis()
+          // if (sleepingTimeTillNext5ms > 0) {
+          //   logger.debug(s"""sleep time $sleepingTimeTillNext5ms ms before next 5  ms $next5MS ; current time: ${System.currentTimeMillis()}""")
+          //   Thread.sleep(sleepingTimeTillNext5ms)
+          // }
+          // next5MS = next5MS + 5
         }
-        val sleepingTimeTillNext100Ms = next100Ms - System.currentTimeMillis()
-        if (sleepingTimeTillNext100Ms > 0) {
-          logger.debug(s"""sleep time $sleepingTimeTillNext100Ms ms before next 100  ms $next100Ms ; current time: ${System.currentTimeMillis()}""")
-          Thread.sleep(sleepingTimeTillNext100Ms)
-        }
-        next100Ms = next100Ms + 100
+        // val sleepingTimeTillNext100Ms = next100Ms - System.currentTimeMillis()
+        // if (sleepingTimeTillNext100Ms > 0) {
+        //   logger.debug(s"""sleep time $sleepingTimeTillNext100Ms ms before next 100  ms $next100Ms ; current time: ${System.currentTimeMillis()}""")
+        //   Thread.sleep(sleepingTimeTillNext100Ms)
+        // }
+        // next100Ms = next100Ms + 100
       }
 
-      // continue at the beginning of the next second
-      val sleepTimeBeforeNextSecond = nextSecond - System.currentTimeMillis()
-      if (sleepTimeBeforeNextSecond > 0) {
-        logger.debug(s"""sleep time $sleepTimeBeforeNextSecond ms before next timestamp $nextSecond ; current time: ${System.currentTimeMillis()}""")
-        Thread.sleep(sleepTimeBeforeNextSecond)
-      }
+      // // continue at the beginning of the next second
+      // val sleepTimeBeforeNextSecond = nextSecond - System.currentTimeMillis()
+      // if (sleepTimeBeforeNextSecond > 0) {
+      //   logger.debug(s"""sleep time $sleepTimeBeforeNextSecond ms before next timestamp $nextSecond ; current time: ${System.currentTimeMillis()}""")
+      //   Thread.sleep(sleepTimeBeforeNextSecond)
+      // }
     }
 
     // Close producer

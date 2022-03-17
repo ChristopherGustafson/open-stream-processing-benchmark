@@ -24,6 +24,11 @@ object ConfigUtils extends Serializable {
   val flowTopic: String = configProperties.getString("kafka.flow.topic")
   val speedTopic: String = configProperties.getString("kafka.speed.topic")
 
+  val restockTopic: String = configProperties.getString("kafka.restock.topic")
+  val addTopic: String = configProperties.getString("kafka.add.topic")
+  val checkoutTopic: String = configProperties.getString("kafka.checkout.topic")
+
+
   // AWS settings
   val s3Path: String = configProperties.getString("aws.s3.path") +"/time*.txt/part-00000-*.txt"
   val s3AccessKey: String = configProperties.getString("aws.s3.access.key")

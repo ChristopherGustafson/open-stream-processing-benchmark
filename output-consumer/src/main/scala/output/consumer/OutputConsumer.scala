@@ -12,7 +12,7 @@ object OutputConsumer {
     val configUtils = new ConfigUtils
 
     if (configUtils.local) {
-      LocalModeWriter.run
+      SingleBatchWriter.run
     } else {
       SingleBatchWriter.run
     }

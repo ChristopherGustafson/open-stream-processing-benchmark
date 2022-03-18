@@ -32,6 +32,7 @@ class ClusterConfigUtils(extraKeys: Map[String, String]) extends ConfigUtils {
   val mode: String = extraKeys("spark.MODE")
   val JOBUUID: String = extraKeys("spark.JOBUUID")
   val kafkaBootstrapServers: String = extraKeys("spark.KAFKA_BOOTSTRAP_SERVERS")
+  val kafkaTopic: String = configProperties.getString("addConfirmTopic")
 
   val awsEndpoint: String = configProperties.getString("aws.endpoint")
   val awsAccessKey: String = extraKeys("spark.AWS_ACCESS_KEY")

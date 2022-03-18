@@ -20,35 +20,12 @@ import scala.collection.JavaConverters._
  * - Updates latency histogram as data comes in
  * - Sends histograms to Graphite and console logs
  */
-object LocalModeWriter {
+object FileSystemModeWriter {
   def run: Unit = {
     val logger = LoggerFactory.getLogger(this.getClass)
-    val registry: MetricRegistry = new MetricRegistry
     val localConfigUtils = new LocalConfigUtils
 
-    val jmxReporter: JmxReporter = JmxReporter.forRegistry(registry).build()
-    jmxReporter.start()
-
-    val slf4jReporter: Slf4jReporter = Slf4jReporter.forRegistry(registry)
-      .outputTo(logger)
-      .convertRatesTo(TimeUnit.MILLISECONDS)
-      .convertDurationsTo(TimeUnit.MILLISECONDS).build()
-    slf4jReporter.start(10, TimeUnit.SECONDS)
-
-    if(localConfigUtils.graphiteEnabled) {
-      val graphite: Graphite = new Graphite(new InetSocketAddress(localConfigUtils.graphiteHost, localConfigUtils.graphitePort))
-      val reporter: GraphiteReporter = GraphiteReporter.forRegistry(registry)
-        .prefixedWith("benchmark")
-        .convertRatesTo(TimeUnit.SECONDS)
-        .convertDurationsTo(TimeUnit.MILLISECONDS)
-        .filter(MetricFilter.ALL)
-        .build(graphite)
-      reporter.start(1, TimeUnit.SECONDS)
-    } else {
-      logger.warn("Could not start a connection to Graphite. Will continue with only publishing in logs.")
-    }
-    
-    //properties of metric consumer
+        //properties of metric consumer
     val props = new Properties()
     props.put("bootstrap.servers", localConfigUtils.kafkaBootstrapServers)
     props.put("group.id", "output-consumer")
@@ -75,8 +52,8 @@ object LocalModeWriter {
         val durationPublishToPublish = kafkaPublishTimestampResult - publishTimestampInput
         println("Got value: " + metricValue)
         println("Time Duration: " + durationPublishToPublish + "\n")
-        registry.histogram("jobProfile").update(durationPublishToPublish)
-      }
+        // registry.histogram("jobProfile").update(durationPublishToPublish)
+      } 
     }
   }
 

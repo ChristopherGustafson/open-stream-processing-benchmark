@@ -19,6 +19,7 @@ object SingleBatchWriter extends Serializable {
 
   def run = {
     val sparkSession = SparkSession.builder
+      .master("local[*]")
       .appName("output-consumer")
       .getOrCreate()
     import sparkSession.implicits._
@@ -27,16 +28,16 @@ object SingleBatchWriter extends Serializable {
 
     println(configUtils.toString)
 
-    val hadoopConf = sparkSession.sparkContext.hadoopConfiguration
-    hadoopConf.set("fs.s3a.endpoint", configUtils.awsEndpoint)
-    hadoopConf.set("fs.s3a.access.key", configUtils.awsAccessKey)
-    hadoopConf.set("fs.s3a.secret.key", configUtils.awsSecretKey)
+    // val hadoopConf = sparkSession.sparkContext.hadoopConfiguration
+    // hadoopConf.set("fs.s3a.endpoint", configUtils.awsEndpoint)
+    // hadoopConf.set("fs.s3a.access.key", configUtils.awsAccessKey)
+    // hadoopConf.set("fs.s3a.secret.key", configUtils.awsSecretKey)
 
     val inputData = sparkSession.read
       .format("kafka")
       .option("kafka.bootstrap.servers", configUtils.kafkaBootstrapServers)
       .option("kafka.isolation.level", "read_committed")
-      .option("subscribe", configUtils.JOBUUID)
+      .option("subscribe", configUtils.kafkaTopic)
       .option("includeTimestamp", true)
       .option("startingOffsets", "earliest")
       .option("endingOffsets", "latest")
@@ -74,50 +75,50 @@ object SingleBatchWriter extends Serializable {
       .write
       .json(configUtils.path)
 
-    val metricsStream = sparkSession.read
-      .format("kafka")
-      .option("kafka.bootstrap.servers", configUtils.kafkaBootstrapServers)
-      .option("subscribe", "metrics-" + configUtils.JOBUUID)
-      .option("includeTimestamp", true)
-      .option("startingOffsets", "earliest")
-      .option("endingOffsets", "latest")
-      .load()
-      .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
+    // val metricsStream = sparkSession.read
+    //   .format("kafka")
+    //   .option("kafka.bootstrap.servers", configUtils.kafkaBootstrapServers)
+    //   .option("subscribe", "metrics-" + configUtils.JOBUUID)
+    //   .option("includeTimestamp", true)
+    //   .option("startingOffsets", "earliest")
+    //   .option("endingOffsets", "latest")
+    //   .load()
+    //   .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
 
-    // write gcNotifications
-    metricsStream
-      .filter(col("key") === "GCNotifications")
-      .select("value")
-      .write
-      .text(configUtils.gcNotificationsPath)
+    // // write gcNotifications
+    // metricsStream
+    //   .filter(col("key") === "GCNotifications")
+    //   .select("value")
+    //   .write
+    //   .text(configUtils.gcNotificationsPath)
 
-    // write resourceStats
-    metricsStream
-      .filter(col("key") === "ResourceStats")
-      .select("value")
-      .write
-      .text(configUtils.metricsPath)
+    // // write resourceStats
+    // metricsStream
+    //   .filter(col("key") === "ResourceStats")
+    //   .select("value")
+    //   .write
+    //   .text(configUtils.metricsPath)
 
-    // write cadvisorStats
-    metricsStream
-      .filter(col("key") === "CadvisorStats")
-      .select("value")
-      .write
-      .text(configUtils.cadvisorPath)
+    // // write cadvisorStats
+    // metricsStream
+    //   .filter(col("key") === "CadvisorStats")
+    //   .select("value")
+    //   .write
+    //   .text(configUtils.cadvisorPath)
 
-    // write cadvisorHdfsStats
-    metricsStream
-      .filter(col("key") === "CadvisorHdfsStats")
-      .select("value")
-      .write
-      .text(configUtils.cadvisorHdfsPath)
+    // // write cadvisorHdfsStats
+    // metricsStream
+    //   .filter(col("key") === "CadvisorHdfsStats")
+    //   .select("value")
+    //   .write
+    //   .text(configUtils.cadvisorHdfsPath)
 
 
-    // write cadvisorKafkaStats
-    metricsStream
-      .filter(col("key") === "CadvisorKafkaStats")
-      .select("value")
-      .write
-      .text(configUtils.cadvisorKafkaPath)
+    // // write cadvisorKafkaStats
+    // metricsStream
+    //   .filter(col("key") === "CadvisorKafkaStats")
+    //   .select("value")
+    //   .write
+    //   .text(configUtils.cadvisorKafkaPath)
   }
 }

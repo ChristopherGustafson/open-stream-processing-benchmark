@@ -13,8 +13,8 @@ object Versions {
 
 object Dependencies {
   val sparkDependencies = Seq(
-    "org.apache.spark" % s"spark-core_${Versions.scalaBinary}" % Versions.spark % "provided",
-    "org.apache.spark" % s"spark-sql_${Versions.scalaBinary}" % Versions.spark % "provided",
+    "org.apache.spark" % s"spark-core_${Versions.scalaBinary}" % Versions.spark,
+    "org.apache.spark" % s"spark-sql_${Versions.scalaBinary}" % Versions.spark,
     "org.apache.spark" % s"spark-streaming_${Versions.scalaBinary}" % Versions.spark,
     "org.apache.spark" % s"spark-streaming-kafka-0-10_${Versions.scalaBinary}" % Versions.spark,
     "org.apache.spark" % s"spark-sql-kafka-0-10_${Versions.scalaBinary}" % Versions.spark

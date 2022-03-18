@@ -45,7 +45,7 @@ for i in range(1, time_periods+1):
             json_obj = {
                 "itemId": item_id,
                 "quantity": 200,
-                "timestamp": timestamp
+                "publishTimestamp": timestamp
             }
             file.write(item_id + '=' + json.dumps(json_obj, separators=(',', ':')) + '\n')
         else:
@@ -60,7 +60,7 @@ for i in range(1, time_periods+1):
                     "userId": user_id,
                     "quantity": quantity,
                     "itemId": item_id,
-                    "timestamp": timestamp
+                    "publishTimestamp": timestamp
                 }
                 file.write(user_id + '=' + json.dumps(json_obj, separators=(',', ':')) + '\n')
             
@@ -68,7 +68,7 @@ for i in range(1, time_periods+1):
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.0")
             json_obj = {
                 "userId": user_id,
-                "timestamp": timestamp
+                "publishTimestamp": timestamp
             }
             file.write(user_id + '=' + json.dumps(json_obj, separators=(',', ':')) + '\n')
             
